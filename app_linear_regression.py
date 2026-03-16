@@ -75,7 +75,7 @@ for i in range(B_GRID_SIZE):
 # ============================================================
 # INTERFACE TABS
 # ============================================================
-tabs = st.tabs(["1️⃣ The Optimizer (Gradient Descent)", "2️⃣ The Effect of Data and Outliers"])
+tabs = st.tabs(["Training a linear regression with Gradient Descent", "The effect of training data points and outliers"])
 
 # ------------------------------------------------------------
 # TAB 1: GRADIENT DESCENT
@@ -85,7 +85,8 @@ with tabs[0]:
     st.markdown("""
     The goal of simple linear regression is to find the best line ($y = wx + b$) that fits the data. 
     Here, the **Gradient Descent** algorithm starts at a random point in the 'error landscape' and iteratively descends until it finds the 'valley' (optimal values of $w$ and $b$).
-    """)
+    At each step, the algorithm computes the gradient, which points in the direction of the steepest increase in error. It then updates the parameters in the opposite direction, gradually minimizing the error. 
+    The size of each update is governed by the **learning rate**, which determines the scale of the step taken toward the minimum during each iteration.""")
     
     col_ctrl, col_sim = st.columns([1, 4])
     
@@ -214,9 +215,10 @@ with tabs[0]:
 with tabs[1]:
     st.header("Interactive Exploration: Deforming the Model")
     st.markdown("""
-    In this tab, you are not limited by a fixed dataset! The regression line will be computed 
-    **automatically** based on the points filled in the table. 
-    The goal is to explore how different data points and noisy outliers distort your machine's learned patterns.
+    In this tab, you have full control over the training data. The tool starts with 5 initial instances (data points) and a corresponding linear equation.
+    The regression line is computed automatically as you modify the values of $X$ or $y$. You can experiment with the following features to see how the model adapts: (i) edit existing values to see how the slope (w) and intercept (b) react; 
+    (ii) apply scaling to observe how it affects the gradient descent process and convergence; (iii) insert extreme values or "noisy" data to evaluate the model's robustness and determine the point at which a linear equation can no longer adequately represent the underlying pattern.
+    The goal is to explore how different data distributions and noisy outliers distort the machine's learned patterns in real-time.
     """)
 
     # Initialize interactive data in session_state
@@ -241,13 +243,13 @@ with tabs[1]:
         
         st.markdown("---")
         st.subheader("2. Quick Actions")
-        if st.button("🤯 Insert Extreme Outlier"):
+        if st.button("Insert Extreme Outlier"):
             new_row = {"X Axis (Feature)": 4.5, "Y Axis (Target)": 35.0} 
             edited_df.loc[len(edited_df)] = new_row
             st.session_state.custom_data = edited_df
             st.rerun()
             
-        if st.button("🔄 Reset to Perfect Line"):
+        if st.button("Reset to Initial Dataset and Perfect Line"):
             st.session_state.custom_data = pd.DataFrame({"X Axis (Feature)": [1.0, 2.0, 3.0, 4.0, 5.0], "Y Axis (Target)": [2.0, 4.0, 6.0, 8.0, 10.0]})
             st.rerun()
 
@@ -301,4 +303,4 @@ with tabs[1]:
             st.info(f"**The Hidden Math:** The algorithm evaluates the errors (the gray dotted vertical lines in distance to the red line) and tries to make the average of their squares as small as possible. **The final equation is $y = {w_cust:.2f}x + {b_cust:.2f}$**.")
             
             if apply_norm:
-                st.success("Notice how the normalization transformed the axes (X and Y are now mostly between -3 and 3). The relative graphical shape remains the same, but the computational magnitude of the error plummeted! This prevents math explosions.")
+                st.success("Notice how normalization transforms the axes. While the relative shape of the data remains the same, the computational magnitude of the error is significantly reduced. This prevents numerical instability (or what we might call 'math explosions'), ensuring the algorithm converges smoothly.")
