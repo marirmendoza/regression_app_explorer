@@ -1,4 +1,4 @@
-# 📉 Linear Regression Explorer --- Understanding Optimization with Gradient Descent
+# 📉 Linear Regression Explorer -- Understanding Optimization with Gradient Descent
 
 This interactive application, built with **Streamlit** and **Python**,
 allows you to explore the main concepts behind **linear regression** and
@@ -171,18 +171,16 @@ gradients, and optimization trajectories** easier to understand.
 
 ------------------------------------------------------------------------
 
-# Credits
 
-**Author:** Profa. Mariana Recamonde Mendoza
+## Credits
 
-🔗 https://www.inf.ufrgs.br/\~mrmendoza/
+**Author:** Profa. Mariana Recamonde Mendoza. 
 
-📍 Institute of Informatics --- Federal University of Rio Grande do Sul
-(UFRGS), Porto Alegre --- RS, Brazil
+🔗 [Personal website.](https://www.inf.ufrgs.br/~mrmendoza/)
 
-------------------------------------------------------------------------
+📍 [Institute of Informatics](https://www.inf.ufrgs.br/site/) - Federal University of Rio Grande do Sul (UFRGS), Porto Alegre - RS, Brazil
 
-# Notes
 
-*The code was developed with the support of Generative AI (Gemini 3.1
-and ChatGPT 5.2).*
+---
+## Notes
+*The code was developed with the support of Generative AI (Gemini 3.1 and ChatGPT 5.2).*
