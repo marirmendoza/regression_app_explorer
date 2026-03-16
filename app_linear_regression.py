@@ -7,24 +7,24 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from matplotlib.colors import LogNorm
 
-# Configuração da página
-st.set_page_config(page_title="Regressão Linear & Gradiente Descendente - INF/UFRGS", layout="wide")
+# Page config
+st.set_page_config(page_title="Linear Regression & Gradient Descent - INF/UFRGS", layout="wide")
 
 # ============================================================
-# CABEÇALHO INSTITUCIONAL
+# INSTITUTIONAL HEADER
 # ============================================================
 st.markdown("""
-<div style="background-color:#f0f2f6; padding:15px; border-radius:10px; border-left: 5px solid #007bff;">
+<div style="background-color:#f0f2f6; padding:15px; border-radius:10px; border-left: 5px solid #28a745;">
     <strong>Machine Learning – Profa. Mariana Recamonde Mendoza</strong><br>
-    Instituto de Informática, Universidade Federal do Rio Grande do Sul (UFRGS).<br>
-    <em>Material interativo para exploração do treinamento de Regressão Linear e o comportamento dos dados.</em>
+    Institute of Informatics, Federal University of Rio Grande do Sul (UFRGS).<br>
+    <em>Interactive material developed with the support of generative AI (Gemini 3.1 and ChatGPT 5.2).</em>
 </div>
 """, unsafe_allow_html=True)
 
-st.title("💡 Regressão Linear: Otimização e Dados Simples")
+st.title("💡 Linear Regression: Optimization and Interactive Data")
 
 # ============================================================
-# FUNÇÕES DE CUSTO E GRADIENTE (Para a Aba 1)
+# COST AND GRADIENT FUNCTIONS (For Tab 1)
 # ============================================================
 def compute_cost(X, y, w, b):
     m = len(X)
@@ -40,7 +40,7 @@ def compute_gradients(X, y, w, b):
     return dw, db
 
 # ============================================================
-# CARREGAMENTO DE DADOS (California Housing - versão ultra simplificada)
+# LOAD DATA (California Housing - ultra simplified version)
 # ============================================================
 @st.cache_data
 def load_data():
@@ -61,7 +61,7 @@ def load_data():
 
 X, y = load_data()
 
-# Pré-computar a superfície de erro para o plot de contorno (Aba 1)
+# Pre-compute error surface for contour plot (Tab 1)
 W_GRID_SIZE = 50
 B_GRID_SIZE = 50
 w_vals = np.linspace(-3, 3, W_GRID_SIZE)
@@ -73,41 +73,41 @@ for i in range(B_GRID_SIZE):
         J_vals[i, j] = compute_cost(X, y, W[i, j], B[i, j])
 
 # ============================================================
-# ABAS DA INTERFACE
+# INTERFACE TABS
 # ============================================================
-tabs = st.tabs(["1️⃣ O Otimizador (Gradiente Descendente)", "2️⃣ O Efeito dos Dados e Outliers"])
+tabs = st.tabs(["1️⃣ The Optimizer (Gradient Descent)", "2️⃣ The Effect of Data and Outliers"])
 
 # ------------------------------------------------------------
-# ABA 1: GRADIENTE DESCENDENTE
+# TAB 1: GRADIENT DESCENT
 # ------------------------------------------------------------
 with tabs[0]:
-    st.header("Gradiente Descendente em Ação")
+    st.header("Gradient Descent in Action")
     st.markdown("""
-    O objetivo da regressão linear simples é encontrar a melhor reta ($y = wx + b$) que se ajusta aos dados. 
-    Aqui, o algoritmo **Gradiente Descendente** começa em um ponto aleatório da 'paisagem de erros' e desce iterativamente até encontrar o 'vale' (valores ótimos de $w$ e $b$).
+    The goal of simple linear regression is to find the best line ($y = wx + b$) that fits the data. 
+    Here, the **Gradient Descent** algorithm starts at a random point in the 'error landscape' and iteratively descends until it finds the 'valley' (optimal values of $w$ and $b$).
     """)
     
     col_ctrl, col_sim = st.columns([1, 4])
     
     with col_ctrl:
-        st.subheader("Hiperparâmetros")
+        st.subheader("Hyperparameters")
         
         lr_options = [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5]
         lr = st.selectbox(
-            "Taxa de Aprendizado ($\\alpha$)",
+            "Learning Rate ($\\alpha$)",
             options=lr_options,
             index=lr_options.index(0.1),
-            help="Determina o tamanho do passo descendo a montanha."
+            help="Determines the step size when descending the mountain."
         )
 
-        epochs = st.slider("Número de Épocas", min_value=1, max_value=200, value=20, step=1)
+        epochs = st.slider("Number of Epochs", min_value=1, max_value=200, value=20, step=1)
 
         st.markdown("---")
-        st.subheader("Pesos Iniciais")
-        init_w = st.slider("Peso Inicial ($w_0$)", min_value=-2.0, max_value=2.0, value=-1.5, step=0.1)
-        init_b = st.slider("Viés Inicial ($b_0$)", min_value=-2.0, max_value=2.0, value=1.5, step=0.1)
+        st.subheader("Initial Weights")
+        init_w = st.slider("Initial Weight ($w_0$)", min_value=-2.0, max_value=2.0, value=-1.5, step=0.1)
+        init_b = st.slider("Initial Bias ($b_0$)", min_value=-2.0, max_value=2.0, value=1.5, step=0.1)
         
-        run_btn = st.button("▶️ Rodar Otimização", type="primary")
+        run_btn = st.button("▶️ Run Optimization", type="primary")
 
     with col_sim:
         metrics_ph = st.empty()
@@ -117,6 +117,62 @@ with tabs[0]:
         plot_line_ph = col_plots2.empty()
         plot_cost_ph = st.empty()
         
+        # We need a function to draw the plots so we can reuse it initially and dynamically
+        def draw_optimizer_plots(current_w, current_b, history_w=None, history_b=None, epoch_num=0, cost=None):
+            if cost is None:
+                cost = compute_cost(X, y, current_w, current_b)
+                
+            with metrics_ph.container():
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Current Epoch", f"{epoch_num}/{epochs}" if history_w else "Initial State")
+                c2.metric("Loss (Cost)", f"{cost:.4f}")
+                c3.metric("Parameters", f"w: {current_w:.2f} | b: {current_b:.2f}")
+
+            # Plot Surface
+            fig_surf, ax_surf = plt.subplots(figsize=(6, 5))
+            cp = ax_surf.contour(W, B, J_vals, levels=np.logspace(-2, 3, 20), cmap='viridis', norm=LogNorm())
+            
+            if history_w and history_b:
+                ax_surf.plot(history_w, history_b, 'r.-', markersize=8, linewidth=1.5, label='GD Trajectory')
+                ax_surf.plot(current_w, current_b, 'r*', markersize=15, label='Current Point')
+            
+            ax_surf.plot(init_w, init_b, 'bo', markersize=8, label='Start Point')
+            ax_surf.set_xlabel('Weight ($w$)')
+            ax_surf.set_ylabel('Bias ($b$)')
+            ax_surf.set_title('Cost/Error Surface ($J$)')
+            ax_surf.legend()
+            plot_surface_ph.pyplot(fig_surf)
+            plt.close(fig_surf)
+
+            # Plot Line
+            fig_line, ax_line = plt.subplots(figsize=(6, 5))
+            ax_line.scatter(X, y, color='blue', alpha=0.5, label='Data Points')
+            x_range = np.array([X.min(), X.max()])
+            y_pred_line = current_w * x_range + current_b
+            ax_line.plot(x_range, y_pred_line, 'r-', linewidth=3, label='Fitted Line')
+            ax_line.set_xlabel('Feature')
+            ax_line.set_ylabel('Target')
+            ax_line.set_title('Linear Regression')
+            ax_line.legend()
+            plot_line_ph.pyplot(fig_line)
+            plt.close(fig_line)
+
+        # INITIAL STATE RENDERING BEFORE CLICKING RUN
+        if not run_btn:
+            draw_optimizer_plots(init_w, init_b)
+            st.info("👈 Adjust the hyperparameters and click **Run Optimization** to visualize the interactive training.")
+            
+            # Since no optimization ran yet, show a placeholder learning curve chart 
+            # to prevent popping of the UI layout when switching to run status
+            fig_cost, ax_cost = plt.subplots(figsize=(10, 3))
+            ax_cost.set_xlabel('Epoch')
+            ax_cost.set_ylabel('Cost ($J$)')
+            ax_cost.set_title('Learning Curve (Pending...)')
+            ax_cost.grid(True, linestyle='--', alpha=0.7)
+            plot_cost_ph.pyplot(fig_cost)
+            plt.close(fig_cost)
+        
+        # RUNNING OPTIMIZATION
         if run_btn:
             w, b = init_w, init_b
             history = {'w': [w], 'b': [b], 'cost': [compute_cost(X, y, w, b)]}
@@ -134,83 +190,48 @@ with tabs[0]:
                 
                 if epoch % max(1, epochs // 10) == 0 or epoch == epochs - 1:
                     progress_bar.progress((epoch + 1) / epochs)
+                    draw_optimizer_plots(w, b, history['w'], history['b'], epoch + 1, cost)
                     
-                    with metrics_ph.container():
-                        c1, c2, c3 = st.columns(3)
-                        c1.metric("Época Atual", f"{epoch + 1}/{epochs}")
-                        c2.metric("Custo Final (Loss)", f"{cost:.4f}")
-                        c3.metric("Parâmetros", f"w: {w:.2f} | b: {b:.2f}")
-
-                    # Plot Superfície
-                    fig_surf, ax_surf = plt.subplots(figsize=(6, 5))
-                    cp = ax_surf.contour(W, B, J_vals, levels=np.logspace(-2, 3, 20), cmap='viridis', norm=LogNorm())
-                    ax_surf.plot(history['w'], history['b'], 'r.-', markersize=8, linewidth=1.5, label='Trajetória do GD')
-                    ax_surf.plot(history['w'][-1], history['b'][-1], 'r*', markersize=15, label='Fim Atual')
-                    ax_surf.plot(init_w, init_b, 'bo', markersize=8, label='Início')
-                    ax_surf.set_xlabel('Peso ($w$)')
-                    ax_surf.set_ylabel('Viés ($b$)')
-                    ax_surf.set_title('Superfície de Erro/Custo ($J$)')
-                    ax_surf.legend()
-                    plot_surface_ph.pyplot(fig_surf)
-                    plt.close(fig_surf)
-
-                    # Plot Reta
-                    fig_line, ax_line = plt.subplots(figsize=(6, 5))
-                    ax_line.scatter(X, y, color='blue', alpha=0.5)
-                    x_range = np.array([X.min(), X.max()])
-                    y_pred_line = w * x_range + b
-                    ax_line.plot(x_range, y_pred_line, 'r-', linewidth=3, label=f'Reta Ajustada (Ép{epoch+1})')
-                    ax_line.set_xlabel('Feature Média')
-                    ax_line.set_ylabel('Target')
-                    ax_line.set_title('Regressão Linear')
-                    ax_line.legend()
-                    plot_line_ph.pyplot(fig_line)
-                    plt.close(fig_line)
-                    
-            # Plot da Curva Final
+            # Final Learning Curve Plot
             fig_cost, ax_cost = plt.subplots(figsize=(10, 3))
             ax_cost.plot(range(len(history['cost'])), history['cost'], 'g-', linewidth=2)
-            ax_cost.set_xlabel('Época')
-            ax_cost.set_ylabel('Custo ($J$)')
-            ax_cost.set_title('Curva de Aprendizado')
+            ax_cost.set_xlabel('Epoch')
+            ax_cost.set_ylabel('Cost ($J$)')
+            ax_cost.set_title('Learning Curve')
             ax_cost.grid(True, linestyle='--', alpha=0.7)
             plot_cost_ph.pyplot(fig_cost)
             plt.close(fig_cost)
             
+            # Post-run insights
             if cost > history['cost'][0] or np.isnan(cost):
-                st.error("🚨 O algoritmo DIVERGIU! O custo explodiu e os parâmetros deram overflow. A Taxa de Aprendizado está muito alta para esta escala!")
+                st.error("🚨 DIVERGENCE! The algorithm's cost exploded and parameters went into overflow. The Learning Rate is too high for this scale!")
             elif cost > 0.4:
-                st.warning("⚠️ O erro ainda está descendo muito devagar. Teste aumentar as épocas ou a Taxa de Aprendizado (com cuidado).")
-
-        else:
-            st.info("👈 Ajuste os hiperparâmetros e clique em **Rodar Otimização** para visualizar o treinamento interativo.")
+                st.warning("⚠️ The error is decreasing too slowly. Consider increasing the number of epochs or the Learning Rate (with caution).")
 
 # ------------------------------------------------------------
-# ABA 2: MANIPULAÇÃO DE DADOS, OUTLIERS E NORMALIZAÇÃO
+# TAB 2: DATA MANIPULATION, OUTLIERS AND NORMALIZATION
 # ------------------------------------------------------------
 with tabs[1]:
-    st.header("Exploração Interativa: Deformando o Modelo")
+    st.header("Interactive Exploration: Deforming the Model")
     st.markdown("""
-    Nesta aba, você não é limitado por um dataset fixo! O modelo da reta ('linha de tendência') será traçado 
-    **automaticamente** com base nos pontos preenchidos na tabela ao lado. 
-    A ideia aqui é explorar por conta própria como diferentes pontos e 'sujeiras' nos dados deformam o conhecimento da sua máquina.
+    In this tab, you are not limited by a fixed dataset! The regression line will be computed 
+    **automatically** based on the points filled in the table. 
+    The goal is to explore how different data points and noisy outliers distort your machine's learned patterns.
     """)
 
-    # Inicializar dados interativos no session_state pra manter persistência entre cliques
+    # Initialize interactive data in session_state
     if 'custom_data' not in st.session_state:
-        # Começamos com algo perfeitamente linear e limpo
         st.session_state.custom_data = pd.DataFrame({
-            "Eixo X (Feature)": [1.0, 2.0, 3.0, 4.0, 5.0],
-            "Eixo Y (Target)":  [2.0, 4.0, 6.0, 8.0, 10.0]
+            "X Axis (Feature)": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "Y Axis (Target)":  [2.0, 4.0, 6.0, 8.0, 10.0]
         })
 
     col_data, col_graph = st.columns([1, 2])
     
     with col_data:
-        st.subheader("1. Edite os Dados")
-        st.write("Adicione linhas ou edite valores. Tente quebrar a reta linear colocando pontos muito fóra do padrão (Outliers)!")
+        st.subheader("1. Edit the Data")
+        st.write("Add rows or edit values. Try breaking the linear fit by placing extreme outliers!")
         
-        # O data_editor é mágico, permite CRUD na interface gráfica instantaneamente
         edited_df = st.data_editor(
             st.session_state.custom_data, 
             num_rows="dynamic",
@@ -219,69 +240,65 @@ with tabs[1]:
         )
         
         st.markdown("---")
-        st.subheader("2. Operações Rápidas")
-        if st.button("🤯 Inserir Outlier Extremo"):
-            new_row = {"Eixo X (Feature)": 4.5, "Eixo Y (Target)": 35.0} # Ponto absurdo na vertical
+        st.subheader("2. Quick Actions")
+        if st.button("🤯 Insert Extreme Outlier"):
+            new_row = {"X Axis (Feature)": 4.5, "Y Axis (Target)": 35.0} 
             edited_df.loc[len(edited_df)] = new_row
             st.session_state.custom_data = edited_df
             st.rerun()
             
-        if st.button("🔄 Resetar para Linha Perfeita"):
-            st.session_state.custom_data = pd.DataFrame({"Eixo X (Feature)": [1.0, 2.0, 3.0, 4.0, 5.0], "Eixo Y (Target)": [2.0, 4.0, 6.0, 8.0, 10.0]})
+        if st.button("🔄 Reset to Perfect Line"):
+            st.session_state.custom_data = pd.DataFrame({"X Axis (Feature)": [1.0, 2.0, 3.0, 4.0, 5.0], "Y Axis (Target)": [2.0, 4.0, 6.0, 8.0, 10.0]})
             st.rerun()
 
         st.markdown("---")
-        st.subheader("3. Escala e Normalização")
-        apply_norm = st.checkbox("Aplicar Função Normalizadora (Z-Score)", value=False)
-        st.caption("Aplica `(X - mean) / std` aos eixos. Essencial quando se usa grandes escalas ou outliers no GD!")
+        st.subheader("3. Scale and Normalization")
+        apply_norm = st.checkbox("Apply Normalization (Z-Score)", value=False)
+        st.caption("Applies `(X - mean) / std` to the axes. This is essential when applying Gradient Descent to datasets with large numeric ranges!")
 
     with col_graph:
-        st.subheader("Visualização do Comportamento")
+        st.subheader("Behavior Visualization")
         
         if len(edited_df) < 2:
-            st.warning("⚠️ Você precisa de pelo menos 2 pontos na tabela para traçar uma reta.")
+            st.warning("⚠️ You need at least 2 points in the table to draw a line.")
         else:
-            # Pegando os dados validados do editor
-            X_cust = edited_df["Eixo X (Feature)"].values.reshape(-1, 1)
-            y_cust = edited_df["Eixo Y (Target)"].values
+            X_cust = edited_df["X Axis (Feature)"].values.reshape(-1, 1)
+            y_cust = edited_df["Y Axis (Target)"].values
             
             if apply_norm:
                 X_cust = StandardScaler().fit_transform(X_cust)
                 y_cust = StandardScaler().fit_transform(y_cust.reshape(-1, 1)).flatten()
             
-            # Ajuste de Scikit-Learn super rápido (Instantâneo pro user experience)
             lin_model = LinearRegression()
             lin_model.fit(X_cust, y_cust)
             y_pred_cust = lin_model.predict(X_cust)
             
-            # Extraindo a equação e estatísticas da reta atual
             w_cust = lin_model.coef_[0]
             b_cust = lin_model.intercept_
             mse_cust = np.mean((y_cust - y_pred_cust)**2)
 
             fig_custom, ax_custom = plt.subplots(figsize=(8, 6))
-            ax_custom.scatter(X_cust, y_cust, color='blue', s=80, edgecolor='k', label='Seus Dados')
+            ax_custom.scatter(X_cust, y_cust, color='blue', s=80, edgecolor='k', label='Your Data')
             
-            # Traçar reta um pouco além dos min e max pros cantos não ficarem engessados
             x_min_cust, x_max_cust = X_cust.min() - 1, X_cust.max() + 1
             x_line_cust = np.linspace(x_min_cust, x_max_cust, 100).reshape(-1, 1)
             y_line_cust = lin_model.predict(x_line_cust)
             
-            ax_custom.plot(x_line_cust, y_line_cust, color='red', linewidth=3, linestyle='--', label='Reta de Melhor Ajuste')
+            ax_custom.plot(x_line_cust, y_line_cust, color='red', linewidth=3, linestyle='--', label='Line of Best Fit')
             
-            # Adicionar pequenas linhas provando o Erro (Residuais)
+            # Show residuals (errors)
             for x_i, y_i, y_p in zip(X_cust.flatten(), y_cust, y_pred_cust):
                 ax_custom.plot([x_i, x_i], [y_i, y_p], color='gray', linestyle=':', alpha=0.6)
             
-            ax_custom.set_title(f"Impacto na Minimização dos Erros (MSE: {mse_cust:.2f})")
-            ax_custom.set_xlabel("Eixo X (Normalizado)" if apply_norm else "Eixo X")
-            ax_custom.set_ylabel("Eixo Y (Normalizado)" if apply_norm else "Eixo Y")
+            ax_custom.set_title(f"Impact on Error Minimization (MSE: {mse_cust:.2f})")
+            ax_custom.set_xlabel("X Axis (Normalized)" if apply_norm else "X Axis")
+            ax_custom.set_ylabel("Y Axis (Normalized)" if apply_norm else "Y Axis")
             ax_custom.legend()
             ax_custom.grid(True, linestyle='--', alpha=0.5)
             
             st.pyplot(fig_custom)
 
-            st.info(f"**A Fórmula Oculta:** O algoritmo matematicamente tentou achar a reta que que faz todos os 'riscos pontilhados cinzas' serem o menor possível. **A Equação final foi $y = {w_cust:.2f}x + {b_cust:.2f}$**.")
+            st.info(f"**The Hidden Math:** The algorithm evaluates the errors (the gray dotted vertical lines in distance to the red line) and tries to make the average of their squares as small as possible. **The final equation is $y = {w_cust:.2f}x + {b_cust:.2f}$**.")
             
             if apply_norm:
-                st.success("Note como a normalização transformou os eixos (X e Y costumam ficar entre -3 e 3). O formato gráfico relativo (o desenho) parece o mesmo, mas a magnitude computacional do erro despencou! Reduz overflow nos algoritmos.")
+                st.success("Notice how the normalization transformed the axes (X and Y are now mostly between -3 and 3). The relative graphical shape remains the same, but the computational magnitude of the error plummeted! This prevents math explosions.")
